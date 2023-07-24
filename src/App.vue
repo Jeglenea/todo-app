@@ -16,5 +16,9 @@ export default {
 </script>
 
 <style>
-
+:root{
+    background-image: url('/src/assets/layered-waves-haikei.svg');
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
 </style>
