@@ -8,12 +8,25 @@
 
     <!-- Input -->
     <div class="d-flex mt-5">
+      <select v-model="selectedCategory" class="form-control mx-2">
+        <option v-for="category in categories" :key="category">
+          {{ category }}
+        </option>
+      </select>
       <input
         type="text"
-        v-model="task"
+        v-model="taskName"
         placeholder="Enter task"
         class="w-100 form-control"
       />
+      <select v-model="selectedStatus" class="form-control mx-2">
+        <option v-for="status in statuses" :key="status">{{ status }}</option>
+      </select>
+      <select v-model="selectedImportance" class="form-control">
+        <option v-for="level in importanceLevels" :key="level">
+          {{ level }}
+        </option>
+      </select>
       <button class="btn btn-warning rounded-0" @click="submitTask">
         SUBMIT
       </button>
@@ -23,8 +36,8 @@
     <table class="table table-bordered mt-5">
       <thead>
         <tr>
+          <th scope="col">Category</th>
           <th scope="col">Task</th>
-          <th scope="col">Photo</th>
           <th scope="col" style="width: 150px">Status</th>
           <th scope="col" style="width: 150px">Importance</th>
           <th scope="col" class="text-center">#</th>
@@ -34,18 +47,12 @@
       <tbody>
         <tr v-for="(task, index) in tasks" :key="index">
           <td>
+          {{ task.category }}
+        </td>
+          <td>
             <span :class="{ 'line-through': task.status === 'Finished' }">
               {{ task.name }}
             </span>
-          </td>
-          <td>
-            <p class="fa fa-upload pointer" @click="openFileInput"></p>
-            <input
-              type="file"
-              @change="handleFileUpload"
-              ref="fileInput"
-              class="small-file-input"
-            />
           </td>
           <td>
             <div
@@ -141,27 +148,34 @@ export default {
   data() {
     return {
       isLoading: true,
-      task: "",
+      taskName: "",
+      selectedStatus: "To-do",
+      selectedImportance: "Low",
       editedTask: null,
       importanceLevels: ["Low", "Medium", "High"], // Importance levels
       statuses: ["To-do", "In-progress", "Finished"],
+      selectedCategory: "",
+      categories: ["Work", "Personal", "Shopping", "Study", "Other"],
 
       /* Status could be: 'to-do' / 'in-progress' / 'finished' */
       tasks: [
         {
           name: "Steal bananas from the supermarket.",
           status: "To-do",
-          importance: "Low", // Importance level for this task
+          importance: "Low",
+          category: "Personal",
         },
         {
           name: "Eat 1 kg chocolate in 1 hour.",
           status: "In-progress",
-          importance: "Medium", // Importance level for this task
+          importance: "Medium",
+          category: "Other",
         },
         {
           name: "Create YouTube video.",
           status: "Finished",
-          importance: "High", // Importance level for this task
+          importance: "High",
+          category: "Work"
         },
       ],
     };
@@ -175,10 +189,6 @@ export default {
   },
 
   methods: {
-    openFileInput(event) {
-      this.selectedFile=event.target.files[0];
-    },
-
     /**
      * Capitalize first character
      */
@@ -190,7 +200,7 @@ export default {
      * Edit importance
      */
     editStatus(index) {
-      this.task = this.tasks[index].status;
+      this.selectedStatus = this.tasks[index].status;
       this.editedTask = index;
     },
 
@@ -205,7 +215,7 @@ export default {
      * Edit importance
      */
     editImportance(index) {
-      this.task = this.tasks[index].importance;
+      this.selectedImportance = this.tasks[index].importance;
       this.editedTask = index;
     },
 
@@ -229,45 +239,42 @@ export default {
     editTask(index) {
       if (this.tasks[index].status === "Finished") {
         // Show a pop-up alert to inform the user that editing is not allowed for "finished" tasks
-        alert("Editing is not allowed for tasks with 'finished' status.");
+        alert("Editing is not allowed for tasks with 'Finished' status.");
         return;
       }
-      this.task = this.tasks[index].name;
+      this.taskName = this.tasks[index].name;
+      this.selectedStatus = this.tasks[index].status;
+      this.selectedImportance = this.tasks[index].importance;
       this.editedTask = index;
     },
 
     /**
      * Add / Update task
      */
-    submitTask() {
-      if (this.task.length === 0) return;
+     submitTask() {
+      if (this.taskName.length === 0 || this.selectedCategory === "") return;
 
       /* We need to update the task */
       if (this.editedTask !== null) {
-        this.tasks[this.editedTask].name = this.task;
+        this.tasks[this.editedTask].name = this.taskName;
+        this.tasks[this.editedTask].status = this.selectedStatus;
+        this.tasks[this.editedTask].importance = this.selectedImportance;
+        this.tasks[this.editedTask].category = this.selectedCategory; // Add the selected category to the task
         this.editedTask = null;
       } else {
         /* We need to add a new task */
-        const newTask = {
-          name: this.task,
-          status: "To-do",
-          importance: "Low", // Default importance level for new tasks
-          file: null, // Initialize file property for the new task
-        };
-
-        // Check if a file was attached to the new task and store it
-        if (
-          this.$refs.fileInput &&
-          this.$refs.fileInput[0] &&
-          this.$refs.fileInput[0].files[0]
-        ) {
-          newTask.file = this.$refs.fileInput[0].files[0];
-        }
-
-        this.tasks.push(newTask);
+        this.tasks.push({
+          name: this.taskName,
+          status: this.selectedStatus,
+          importance: this.selectedImportance,
+          category: this.selectedCategory, // Add the selected category to the task
+        });
       }
 
-      this.task = "";
+      this.taskName = "";
+      this.selectedStatus = "To-do";
+      this.selectedImportance = "Low";
+      this.selectedCategory = ""; // Reset selected category after adding/updating the task
     },
   },
 };
